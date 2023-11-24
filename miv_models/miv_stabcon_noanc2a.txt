@@ -1,0 +1,62 @@
+model{
+
+for(i in 1:N){
+
+##############################################
+# within level
+##############################################
+for(j in 1:p){y[i,j] ~ dnorm(muy[i,j],psiy[j])}
+
+    for(j in 1:p){
+      muy[i,j] <- ty0[j]  + ly0[j]*xi[i] + inprod(x[i,],ty1[,j])+ xi[i]*inprod(x[i,],ly1[,j]) 
+    }
+
+    xi[i] ~ dnorm(muxi[i],psixi[i])
+    muxi[i] <- inprod(x[i,],ka1[1:q])
+    psixi[i] <- exp(inprod(x[i,],ps1[1:q]))
+
+}
+
+##############################################
+# priors on precisions
+##############################################
+for(j in 1:p){psiy[j] ~ dgamma(9,4)}
+
+for(j in 1:p){ly0[j] ~ dnorm(1,1)I(0,)
+              ty0[j] ~ dnorm(0,1)}
+
+# update based on Ishwaran Eq. 4
+for(j in 1:p){
+  for(k in 1:q){
+    # theta sim dnorm(0,taustar/Ik)
+    # same as 
+    # theta sim dnorm(0,1/(Ik*tau^2))
+    ly1[k,j] ~ dnorm(0,tauly[k,j]/lambdaly[k,j])
+    ty1[k,j] ~ dnorm(0,tauty[k,j]/lambdaty[k,j])
+    
+    # taustar sim gamma
+    # same as 
+    # tau^-2 sim dgamma
+    tauly[k,j] ~ dgamma(9,4)
+    tauty[k,j] ~ dgamma(9,4)
+    
+    # wk sim uni(0,1)
+    gammaly[k,j] ~ dbeta(1,1)
+    gammaty[k,j] ~ dbeta(1,1)
+    # Ik sim (1-wk)*d0 + wk*d1 with d0=.005 as in Ishwaran p. 7
+    lambdaly[k,j] <- (1-gammaly[k,j])*0.005 + gammaly[k,j]
+    lambdaty[k,j] <- (1-gammaty[k,j])*0.005 + gammaty[k,j]
+  }
+}
+  
+for(k in 1:q){
+  ka1[k] ~ dnorm(0,1)
+  ps1[k] ~ dnorm(0,1)
+}
+
+##############################################
+# transformations
+##############################################
+for(j in 1:p){sigmay[j]<- 1/psiy[j]}
+
+}

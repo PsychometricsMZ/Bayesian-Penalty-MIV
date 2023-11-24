@@ -1,0 +1,46 @@
+model{
+
+for(i in 1:N){
+
+##############################################
+# within level
+##############################################
+for(j in 1:p){y[i,j] ~ dnorm(muy[i,j],psiy[j])}
+
+    for(j in 1:p){
+      muy[i,j] <- ty0[j]  + ly0[j]*xi[i] + inprod(x[i,],ty1[,j])+ xi[i]*inprod(x[i,],ly1[,j]) 
+    }
+
+    xi[i] ~ dnorm(muxi[i],psixi[i])
+    muxi[i] <- inprod(x[i,],ka1[1:q])
+    psixi[i] <- exp(inprod(x[i,],ps1[1:q]))
+
+}
+
+##############################################
+# priors on precisions
+##############################################
+for(j in 1:p){psiy[j] ~ dgamma(9,4)}
+
+for(j in 1:p){ly0[j] ~ dnorm(1,1)I(0,)
+              ty0[j] ~ dnorm(0,1)}
+
+for(j in 1:p){
+  for(k in 1:q){
+    ly1[k,j] ~ dnorm(0,1)
+    ty1[k,j] ~ dnorm(0,1)
+  }
+}  
+  
+for(k in 1:q){
+  ka1[k] ~ dnorm(0,1)
+  ps1[k] ~ dnorm(0,1)
+}
+  
+
+##############################################
+# transformations
+##############################################
+for(j in 1:p){sigmay[j]<- 1/psiy[j]}
+
+}
